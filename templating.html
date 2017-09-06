@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>Reddit Templating</title>
+	<style>
+		body {
+			min-height: 100vh;
+			box-sizing: border-box;
+			padding: 20px;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			flex-direction: column;
+			background-color: #444;
+			color: #ddd;
+		}
+		#posts {
+			padding-top: 10px;
+			display: flex;
+			justify-content: center;
+			flex-direction: row;
+			flex-wrap: wrap;
+		}
+		.post {
+			width: 18%;
+			border: 1px solid #777;
+			margin: 5px;
+			padding: 5px;
+			background-color: #555;
+			box-sizing: border-box;
+			display: flex;
+			flex-direction: column;
+			justify-content: space-between;
+		}
+		.sticky {
+			/* border-width: 3px; */
+			background-color: #666;
+		}
+		a {
+			text-decoration: none;
+			color: #99d;
+		}
+		a:hover {
+			text-decoration: underline;
+		}
+		.loader,
+		.loader:after {
+		  border-radius: 50%;
+		  width: 5em;
+		  height: 5em;
+		}
+		.loader {
+		  margin: 30px auto;
+		  font-size: 10px;
+		  position: relative;
+		  text-indent: -9999em;
+		  border-top: 0.7em solid rgba(255, 204, 204, 0.2);
+		  border-right: 0.7em solid rgba(204, 255, 204, 0.2);
+		  border-bottom: 0.7em solid rgba(204, 204, 255, 0.2);
+		  border-left: 0.7em solid #ffffff;
+		  -webkit-transform: translateZ(0);
+		  -ms-transform: translateZ(0);
+		  transform: translateZ(0);
+		  -webkit-animation: load8 1.1s infinite linear;
+		  animation: load8 1.1s infinite linear;
+		}
+		@-webkit-keyframes load8 {
+		  0% {
+		    -webkit-transform: rotate(0deg);
+		    transform: rotate(0deg);
+		  }
+		  100% {
+		    -webkit-transform: rotate(360deg);
+		    transform: rotate(360deg);
+		  }
+		}
+		@keyframes load8 {
+		  0% {
+		    -webkit-transform: rotate(0deg);
+		    transform: rotate(0deg);
+		  }
+		  100% {
+		    -webkit-transform: rotate(360deg);
+		    transform: rotate(360deg);
+		  }
+		}
+	</style>
+</head>
+<body>
+<script src="jquery-3.2.1.min.js"></script>
+<script src="handlebars-v4.0.10.js"></script>
+<div id="search">
+	<button id="go">get</button> <input id="pick">
+</div>
+<template id="posts-template">
+	{{#each posts}}
+		<div class="post{{#if data.stickied}} sticky{{/if}}">
+			<a href="{{data.url}}">{{data.title}}</a>
+			<div class="info">Score: {{data.score}} ･ {{#if data.num_comments}}Comments: {{data.num_comments}}{{else}}No comments.{{/if}}</div>
+		</div>
+	{{/each}}
+</template>
+<div id="posts"></div>
+<script>
+	function display(results) {
+		core = results.data.children.filter(a => !a.data.stickied).concat(results.data.children.filter(a => a.data.stickied));
+		var template = document.querySelector("#posts-template").innerHTML;
+		var showPosts = Handlebars.compile(template);
+		document.querySelector("#posts").innerHTML = showPosts({
+			posts: core
+		});
+		var top = 0;
+		var items = $(".post").each(function() {
+			top = Math.max(top, $(this).height());
+		});
+		items.height(top);
+	};
+	$("#go").on("click", function() {
+		document.querySelector("#posts").innerHTML = '<div class="loader">Loading...</div>';
+		$.getJSON("https://www.reddit.com/r/" + $("#pick").val() + ".json").then(display, function() {
+			document.querySelector("#posts").innerHTML = "Oops! Something went wrong."
+		});
+	});
+</script>
+</body>
+</html>
